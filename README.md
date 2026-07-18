@@ -27,6 +27,3 @@ It provides CRUD operations and connects to a SQL Server database using Entity F
 - Data validation
 - Logging support
 
-## API Endpoints
-
-### GET
