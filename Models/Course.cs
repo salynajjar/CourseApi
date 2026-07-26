@@ -12,9 +12,7 @@ namespace CourseApi.Models
         [StringLength(100)]
         public string Title { get; set; }
 
-        [Required (ErrorMessage ="Instructor name is required.")]
-        [StringLength(50)]
-        public string Instructor { get; set; }
+       
 
         [Range(1,6,ErrorMessage = "Credithours must be between 1 and 6 .")]
 
@@ -24,6 +22,19 @@ namespace CourseApi.Models
         public decimal Price { get; set; }
 
 
+        // Foreign Key
+        public int TeacherId { get; set; }
+
+        // Navigation Property
+        public Teacher Teacher { get; set; }
+
+        public ICollection<StudentCourse> StudentCourses { get; set; }
+            = new List<StudentCourse>();
+
+        public ICollection<CoursePrerequisite> Prerequisites { get; set; }
+
+        public ICollection<CoursePrerequisite> RequiredFor { get; set; }
 
     }
+
 }
