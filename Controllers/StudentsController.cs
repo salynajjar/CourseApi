@@ -310,5 +310,86 @@ namespace CourseApi.Controllers
             return NoContent();
         }
 
+
+        // PUT: api/Students/{studentId}/courses/{courseId}/status
+        [HttpPut("{studentId}/courses/{courseId}/status")]
+        public async Task<IActionResult> UpdateCourseStatus(
+            int studentId,
+            int courseId,
+            UpdateStudentCourseStatusVM model)
+        {
+            var studentCourse = await _context.StudentCourses
+                .FirstOrDefaultAsync(sc =>
+                    sc.StudentId == studentId &&
+                    sc.CourseId == courseId);
+
+            //check 
+
+            if (studentCourse == null)
+            {
+                return NotFound(new
+                {
+                    message = "Student is not enrolled in this course."
+                });
+            }
+
+            if (model.EnrollmentStatus == EnrollmentStatus.NotStarted &&
+                model.PassStatus != PassStatus.Pending)
+            {
+                return BadRequest(new
+                {
+                    message = "NotStarted course must have Pending pass status."
+                });
+            }
+
+            if (model.EnrollmentStatus == EnrollmentStatus.InProgress &&
+                model.PassStatus != PassStatus.Pending)
+            {
+                return BadRequest(new
+                {
+                    message = "InProgress course must have Pending pass status."
+                });
+            }
+
+            if (model.EnrollmentStatus == EnrollmentStatus.Withdrawn &&
+                model.PassStatus != PassStatus.Pending)
+            {
+                return BadRequest(new
+                {
+                    message = "Withdrawn course must have Pending pass status."
+                });
+            }
+
+            if (model.EnrollmentStatus == EnrollmentStatus.Completed &&
+                model.PassStatus == PassStatus.Pending)
+            {
+                return BadRequest(new
+                {
+                    message = "Completed course must be Passed or Failed."
+                });
+            }
+
+            studentCourse.EnrollmentStatus = model.EnrollmentStatus;
+            studentCourse.PassStatus = model.PassStatus;
+
+            if (model.EnrollmentStatus == EnrollmentStatus.Completed)
+            {
+                studentCourse.CompletionDate = DateTime.Now;
+            }
+            else
+            {
+                studentCourse.CompletionDate = null;
+            }
+
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                message = "Course status updated successfully."
+            });
+        }
+
+
+
     }
 }
