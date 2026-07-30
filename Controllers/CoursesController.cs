@@ -2,6 +2,7 @@
 using CourseApi.DTOs;
 using CourseApi.Models;
 using CourseApi.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,6 +10,8 @@ namespace CourseApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+
+    [Authorize]
     public class CoursesController : ControllerBase
     {
 

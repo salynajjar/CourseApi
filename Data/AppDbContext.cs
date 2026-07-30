@@ -19,6 +19,7 @@ namespace CourseApi.Data
         public DbSet<StudentCourse> StudentCourses { get; set; }
 
         public DbSet<CoursePrerequisite> CoursePrerequisites { get; set; }
+        public DbSet<AppUser> AppUsers { get; set; }
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

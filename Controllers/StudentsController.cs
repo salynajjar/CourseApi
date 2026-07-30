@@ -390,6 +390,78 @@ namespace CourseApi.Controllers
         }
 
 
+        // Search student courses with filtering and pagination
+        [HttpGet("search-courses")]
+        public async Task<IActionResult> SearchStudentCourses(
+            [FromQuery] StudentCourseSearchVM model)
+        {
+            var query = _context.StudentCourses
+                .Include(sc => sc.Student)
+                .Include(sc => sc.Course)
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(model.StudentName))
+            {
+                query = query.Where(sc =>
+                    sc.Student.Name.Contains(model.StudentName));
+            }
+
+            if (!string.IsNullOrWhiteSpace(model.CourseName))
+            {
+                query = query.Where(sc =>
+                    sc.Course.Title.Contains(model.CourseName));
+            }
+
+            var totalRecords = await query.CountAsync();
+
+            if (model.PageNumber < 1)
+            {
+                model.PageNumber = 1;
+            }
+
+            if (model.PageSize < 1)
+            {
+                model.PageSize = 10;
+            }
+
+            var courses = await query
+                .OrderBy(sc => sc.Student.Name)
+                .Skip((model.PageNumber - 1) * model.PageSize)
+                .Take(model.PageSize)
+                .Select(sc => new StudentCourseSearchDto
+                {
+                    StudentName = sc.Student.Name,
+
+                    CourseTitle = sc.Course.Title,
+
+                    EnrollmentStatus = sc.EnrollmentStatus,
+
+                    PassStatus = sc.PassStatus,
+
+                    EnrollmentDate = sc.EnrollmentDate,
+
+                    CompletionDate = sc.CompletionDate
+                })
+                .ToListAsync();
+
+
+            var result = new PaginatedResultDto<StudentCourseSearchDto>
+            {
+                TotalRecords = totalRecords,
+
+                TotalPages = (int)Math.Ceiling(
+                    totalRecords / (double)model.PageSize),
+
+                PageNumber = model.PageNumber,
+
+                PageSize = model.PageSize,
+
+                Data = courses
+            };
+
+
+            return Ok(result);
+        }
 
     }
 }
