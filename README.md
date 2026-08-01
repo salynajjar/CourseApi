@@ -61,7 +61,24 @@ A RESTful Web API built with **ASP.NET Core** and **Entity Framework Core** for 
    dotnet run
    ```
 
-5. **Open Swagger** at `https://localhost:7xxx/swagger` (see `launchSettings.json` for ports).
+5. **Run tests**
+   ```bash
+   dotnet test
+   ```
+
+6. **Open Swagger** at `https://localhost:7xxx/swagger` (see `launchSettings.json` for ports).
+
+---
+
+## Role-Based Authorization
+
+| Role | Permissions |
+|------|-------------|
+| **Admin** | Delete resources, manage students/teachers |
+| **Teacher** | Create/update courses, manage prerequisites |
+| **Student** | Enroll in courses, update own enrollment status |
+
+Delete endpoints require the **Admin** role.
 
 ---
 
@@ -141,6 +158,7 @@ A RESTful Web API built with **ASP.NET Core** and **Entity Framework Core** for 
 ```
 CourseApi/
 ├── Controllers/       # API endpoints
+├── CourseApi.Tests/   # xUnit tests
 ├── Data/              # AppDbContext
 ├── DTOs/              # Response & request DTOs
 ├── Enums/             # EnrollmentStatus, PassStatus, Role

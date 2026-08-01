@@ -144,6 +144,7 @@ namespace CourseApi.Controllers
 
         // POST
         [HttpPost]
+        [Authorize(Roles = "Admin,Teacher")]
         public async Task<ActionResult<Student>> CreateStudent(CreateStudentVM model)
         {
          
@@ -174,6 +175,7 @@ namespace CourseApi.Controllers
 
         // POST
         [HttpPost("{studentId}/courses")]
+        [Authorize(Roles = "Admin,Teacher,Student")]
         public async Task<IActionResult> AddCourseToStudent(
             int studentId,
             AddCourseToStudentVM model)
@@ -325,6 +327,7 @@ namespace CourseApi.Controllers
 
         // PUT 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin,Teacher")]
         public async Task<IActionResult> UpdateStudent(
             int id,
             CreateStudentVM model)
@@ -364,6 +367,7 @@ namespace CourseApi.Controllers
 
         // DELETE
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteStudent(int id)
         {
 
@@ -392,6 +396,7 @@ namespace CourseApi.Controllers
 
         // PUT: api/Students/{studentId}/courses/{courseId}/status
         [HttpPut("{studentId}/courses/{courseId}/status")]
+        [Authorize(Roles = "Admin,Teacher,Student")]
         public async Task<IActionResult> UpdateCourseStatus(
             int studentId,
             int courseId,

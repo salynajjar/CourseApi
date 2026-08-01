@@ -88,6 +88,7 @@ namespace CourseApi.Controllers
 
         // POST: api/courses
         [HttpPost]
+        [Authorize(Roles = "Admin,Teacher")]
         public async Task<ActionResult<CourseDto>> CreateCourse(
          CreateCourseVM model)
         {
@@ -157,6 +158,7 @@ namespace CourseApi.Controllers
 
         // PUT: api/courses/5
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin,Teacher")]
         public async Task<IActionResult> UpdateCourse(
             int id,
             CreateCourseVM model)
@@ -217,6 +219,7 @@ namespace CourseApi.Controllers
 
         // DELETE: api/courses/5
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteCourse(int id)
         {
 
@@ -344,6 +347,7 @@ namespace CourseApi.Controllers
         // POST
 
         [HttpPost("{courseId}/prerequisites")]
+        [Authorize(Roles = "Admin,Teacher")]
         public async Task<IActionResult> AddPrerequisite(
     int courseId,
     AddPrerequisiteVM model)
@@ -401,6 +405,7 @@ namespace CourseApi.Controllers
 
         // DELETE: api/Courses/5/prerequisites/2
         [HttpDelete("{courseId}/prerequisites/{prerequisiteId}")]
+        [Authorize(Roles = "Admin,Teacher")]
         public async Task<IActionResult> RemovePrerequisite(
             int courseId,
             int prerequisiteId)

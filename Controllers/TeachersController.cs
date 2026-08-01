@@ -71,6 +71,7 @@ namespace CourseApi.Controllers
 
         // POST
         [HttpPost]
+        [Authorize(Roles = "Admin")]
         public async Task<ActionResult<TeacherDto>> CreateTeacher(CreateTeacherVM model)
         {
             if (!ModelState.IsValid)
@@ -108,6 +109,7 @@ namespace CourseApi.Controllers
 
 
         [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> UpdateTeacher(
             int id,
             CreateTeacherVM model)
@@ -145,6 +147,7 @@ namespace CourseApi.Controllers
 
 
         [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> DeleteTeacher(int id)
         {
 
