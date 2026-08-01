@@ -1,122 +1,165 @@
 # Course API
 
-A professional RESTful Web API built with **ASP.NET Core** and **Entity Framework Core** for managing courses, students, teachers, and course enrollments.
+A RESTful Web API built with **ASP.NET Core** and **Entity Framework Core** for managing courses, students, teachers, enrollments, and prerequisites.
 
-This project was developed to apply backend development concepts including API design, database modeling, Entity Framework Core relationships, authentication, authorization, and clean code practices.
-
----
-
-## Project Overview
-
-Course API is a backend application that provides a complete API for managing an educational course system.
-
-The system supports managing:
-
-* Courses
-* Students
-* Teachers
-* Student enrollments
-* Course prerequisites
-
-The API uses **SQL Server** as the database and **Entity Framework Core** for data access following the Code First approach.
-
----
-
-## Technologies
-
-* ASP.NET Core Web API (.NET 10)
-* C#
-* Entity Framework Core
-* SQL Server
-* LINQ
-* Swagger / OpenAPI
-* JWT Authentication
-* Dependency Injection
-* Middleware
-* DTOs and ViewModels
+**Author:** Saly Najjar — `salynajjar923@gmail.com`  
+**Repository:** [github.com/salynajjar/CourseApi](https://github.com/salynajjar/CourseApi)
 
 ---
 
 ## Features
 
-### Course Management
-
-* Get all courses
-* Get course by ID
-* Create a new course
-* Update course information
-* Delete courses
-* Search courses by title
-* Filter courses by price
-
-### Student Management
-
-* Create and manage students
-* Enroll students in courses
-* View student enrolled courses
-* Track enrollment details and status
-
-### Teacher Management
-
-* Create and manage teachers
-* Assign teachers to courses
-
-### Course Relationships
-
-* Manage course prerequisites
-* Handle many-to-many relationships between students and courses
-* Configure entity relationships using Entity Framework Core
-
-### Security and Validation
-
-* Data validation
-* JWT-based authentication
-* Role-based authorization support
-* JSON serialization configuration
-* Logging support
+| Area | Capabilities |
+|------|-------------|
+| **Courses** | CRUD, search by title, filter by price, prerequisite management |
+| **Students** | CRUD, course enrollment, status tracking, global paginated search |
+| **Teachers** | CRUD with course associations |
+| **Security** | JWT authentication, protected endpoints, role claims |
+| **Quality** | Validation, enum checks, exception middleware, async EF Core |
 
 ---
 
-## Database Design
+## Tech Stack
 
-The project uses Entity Framework Core with the Code First approach.
+- ASP.NET Core Web API (.NET 10)
+- Entity Framework Core + SQL Server
+- JWT Bearer Authentication
+- Swagger / OpenAPI
+- DTOs & ViewModels
 
-Main entities:
+---
 
-* Student
-* Teacher
-* Course
-* StudentCourse
-* CoursePrerequisite
+## Getting Started
 
-Relationships:
+### Prerequisites
 
-* One-to-Many relationship between Teacher and Courses
-* Many-to-Many relationship between Students and Courses
-* Course prerequisite relationships
+- [.NET 10 SDK](https://dotnet.microsoft.com/download)
+- SQL Server (LocalDB or full instance)
+
+### Setup
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/salynajjar/CourseApi.git
+   cd CourseApi
+   ```
+
+2. **Configure the connection string** in `appsettings.json`:
+   ```json
+   "ConnectionStrings": {
+     "DefaultConnection": "Server=(localdb)\\mssqllocaldb;Database=CourseApiDb;Trusted_Connection=True;"
+   }
+   ```
+
+3. **Apply migrations**
+   ```bash
+   dotnet ef database update
+   ```
+
+4. **Run the API**
+   ```bash
+   dotnet run
+   ```
+
+5. **Open Swagger** at `https://localhost:7xxx/swagger` (see `launchSettings.json` for ports).
+
+---
+
+## Authentication
+
+1. Register a user:
+   ```http
+   POST /api/Auth/register
+   {
+     "username": "saly",
+     "email": "salynajjar923@gmail.com",
+     "password": "SecurePass123!"
+   }
+   ```
+
+2. Login and copy the JWT token:
+   ```http
+   POST /api/Auth/login
+   {
+     "email": "salynajjar923@gmail.com",
+     "password": "SecurePass123!"
+   }
+   ```
+
+3. Include the token in all protected requests:
+   ```
+   Authorization: Bearer {your-token}
+   ```
+
+---
+
+## Key Endpoints
+
+### Auth
+| Method | Route | Description |
+|--------|-------|-------------|
+| POST | `/api/Auth/register` | Register new user |
+| POST | `/api/Auth/login` | Login and receive JWT |
+
+### Courses *(requires JWT)*
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/api/Courses` | List all courses |
+| GET | `/api/Courses/search?title=` | Search by title |
+| GET | `/api/Courses/filter?minPrice=&maxPrice=` | Filter by price |
+| POST | `/api/Courses/{courseId}/prerequisites` | Add prerequisite |
+
+### Students *(requires JWT)*
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/api/Students/courses/search` | Global search with pagination |
+| POST | `/api/Students/{studentId}/courses` | Enroll student |
+| PUT | `/api/Students/{studentId}/courses/{courseId}/status` | Update enrollment status |
+
+**Search query parameters:** `studentName`, `courseName`, `pageNumber`, `pageSize` (max 50)
+
+### Teachers *(requires JWT)*
+| Method | Route | Description |
+|--------|-------|-------------|
+| GET | `/api/Teachers` | List all teachers |
+| POST | `/api/Teachers` | Create teacher |
+
+---
+
+## Business Rules
+
+- A student **cannot enroll twice** in the same course.
+- Prerequisites must be **Completed** and **Passed** before enrollment.
+- **Circular prerequisites** are rejected.
+- Status transitions enforce valid `EnrollmentStatus` / `PassStatus` pairs.
+- Invalid enum values are rejected via `Enum.IsDefined`.
 
 ---
 
 ## Project Structure
 
 ```
-CourseApi
-│
-├── Controllers
-├── Data
-├── Models
-├── DTOs
-├── ViewModels
-├── Services
-├── Extensions
-├── Enums
-└── Migrations
+CourseApi/
+├── Controllers/       # API endpoints
+├── Data/              # AppDbContext
+├── DTOs/              # Response & request DTOs
+├── Enums/             # EnrollmentStatus, PassStatus, Role
+├── Extensions/        # JWT configuration
+├── Middleware/        # Global exception handling
+├── Migrations/        # EF Core migrations
+├── Models/            # Domain entities
+├── Services/          # JwtService
+└── ViewModels/        # Input validation models
 ```
 
 ---
 
+## API Samples
+
+Use [`CourseApi.http`](CourseApi.http) for ready-to-run API samples.
+
+---
 
 ## Author
 
-Saly Najjar
-
+**Saly Najjar**

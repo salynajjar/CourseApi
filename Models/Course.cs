@@ -1,5 +1,4 @@
 ﻿
-using Microsoft.OpenApi.MicrosoftExtensions;
 using System.ComponentModel.DataAnnotations;
 namespace CourseApi.Models
 {
@@ -10,7 +9,7 @@ namespace CourseApi.Models
 
         [Required (ErrorMessage="Course title is required.")]
         [StringLength(100)]
-        public string Title { get; set; }
+        public string Title { get; set; } = string.Empty;
 
        
 
@@ -26,14 +25,16 @@ namespace CourseApi.Models
         public int TeacherId { get; set; }
 
         // Navigation Property
-        public Teacher Teacher { get; set; }
+        public Teacher Teacher { get; set; } = null!;
 
         public ICollection<StudentCourse> StudentCourses { get; set; }
             = new List<StudentCourse>();
 
         public ICollection<CoursePrerequisite> Prerequisites { get; set; }
+            = new List<CoursePrerequisite>();
 
         public ICollection<CoursePrerequisite> RequiredFor { get; set; }
+            = new List<CoursePrerequisite>();
 
     }
 

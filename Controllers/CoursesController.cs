@@ -282,6 +282,13 @@ namespace CourseApi.Controllers
             decimal minPrice,
             decimal maxPrice)
         {
+            if (minPrice > maxPrice)
+            {
+                return BadRequest(new
+                {
+                    message = "minPrice cannot be greater than maxPrice."
+                });
+            }
 
             var courses = await _context.Courses
                 .Include(c => c.Teacher)
@@ -370,6 +377,11 @@ namespace CourseApi.Controllers
                 return BadRequest(
                     "Prerequisite already exists");
 
+            if (await WouldCreateCircularPrerequisite(courseId, model.PrerequisiteCourseId))
+            {
+                return BadRequest(
+                    "Adding this prerequisite would create a circular dependency.");
+            }
 
             var prerequisite = new CoursePrerequisite
             {
@@ -414,8 +426,40 @@ namespace CourseApi.Controllers
             return Ok("Prerequisite removed");
         }
 
+        private async Task<bool> WouldCreateCircularPrerequisite(
+            int courseId,
+            int prerequisiteCourseId)
+        {
+            var visited = new HashSet<int>();
+            var queue = new Queue<int>();
+            queue.Enqueue(prerequisiteCourseId);
 
+            while (queue.Count > 0)
+            {
+                var current = queue.Dequeue();
 
+                if (current == courseId)
+                {
+                    return true;
+                }
 
+                if (!visited.Add(current))
+                {
+                    continue;
+                }
+
+                var nextPrerequisites = await _context.CoursePrerequisites
+                    .Where(cp => cp.CourseId == current)
+                    .Select(cp => cp.PrerequisiteCourseId)
+                    .ToListAsync();
+
+                foreach (var nextId in nextPrerequisites)
+                {
+                    queue.Enqueue(nextId);
+                }
+            }
+
+            return false;
+        }
     }
 }

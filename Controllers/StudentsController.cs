@@ -3,17 +3,19 @@ using CourseApi.DTOs;
 using CourseApi.Enums;
 using CourseApi.Models;
 using CourseApi.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using CourseApi.Enums;
 
 namespace CourseApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class StudentsController : ControllerBase
     {
         private readonly AppDbContext _context;
+        private const int MaxPageSize = 50;
 
 
         public StudentsController(AppDbContext context)
@@ -42,6 +44,72 @@ namespace CourseApi.Controllers
             return Ok(students);
         }
 
+
+        // GET: api/Students/courses/search?studentName=...&courseName=...
+        [HttpGet("courses/search")]
+        public async Task<IActionResult> SearchStudentCourses(
+            [FromQuery] StudentCourseSearchVM model)
+        {
+            var query = _context.StudentCourses
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(model.StudentName))
+            {
+                query = query.Where(sc =>
+                    sc.Student.Name.Contains(model.StudentName));
+            }
+
+            if (!string.IsNullOrWhiteSpace(model.CourseName))
+            {
+                query = query.Where(sc =>
+                    sc.Course.Title.Contains(model.CourseName));
+            }
+
+            var totalRecords = await query.CountAsync();
+
+            if (model.PageNumber < 1)
+            {
+                model.PageNumber = 1;
+            }
+
+            if (model.PageSize < 1)
+            {
+                model.PageSize = 10;
+            }
+
+            if (model.PageSize > MaxPageSize)
+            {
+                model.PageSize = MaxPageSize;
+            }
+
+            var courses = await query
+                .OrderBy(sc => sc.Student.Name)
+                .ThenBy(sc => sc.Course.Title)
+                .Skip((model.PageNumber - 1) * model.PageSize)
+                .Take(model.PageSize)
+                .Select(sc => new StudentCourseSearchDto
+                {
+                    StudentName = sc.Student.Name,
+                    CourseTitle = sc.Course.Title,
+                    EnrollmentStatus = sc.EnrollmentStatus,
+                    PassStatus = sc.PassStatus,
+                    EnrollmentDate = sc.EnrollmentDate,
+                    CompletionDate = sc.CompletionDate
+                })
+                .ToListAsync();
+
+            var result = new PaginatedResultDto<StudentCourseSearchDto>
+            {
+                TotalRecords = totalRecords,
+                TotalPages = (int)Math.Ceiling(
+                    totalRecords / (double)model.PageSize),
+                PageNumber = model.PageNumber,
+                PageSize = model.PageSize,
+                Data = courses
+            };
+
+            return Ok(result);
+        }
 
 
         // GET
@@ -110,8 +178,11 @@ namespace CourseApi.Controllers
             int studentId,
             AddCourseToStudentVM model)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
 
-       
             var student = await _context.Students
                 .FindAsync(studentId);
 
@@ -154,11 +225,12 @@ namespace CourseApi.Controllers
     .ToListAsync();
 
             var completedCourses = await _context.StudentCourses
-    .Where(sc =>
-        sc.StudentId == studentId &&
-        sc.EnrollmentStatus == EnrollmentStatus.Completed)
-    .Select(sc => sc.CourseId)
-    .ToListAsync();
+                .Where(sc =>
+                    sc.StudentId == studentId &&
+                    sc.EnrollmentStatus == EnrollmentStatus.Completed &&
+                    sc.PassStatus == PassStatus.Passed)
+                .Select(sc => sc.CourseId)
+                .ToListAsync();
 
             var missingPrerequisites = prerequisites
     .Except(completedCourses)
@@ -216,6 +288,13 @@ namespace CourseApi.Controllers
         [HttpGet("{studentId}/courses")]
         public async Task<IActionResult> GetStudentCourses(int studentId)
         {
+            var studentExists = await _context.Students
+                .AnyAsync(s => s.Id == studentId);
+
+            if (!studentExists)
+            {
+                return NotFound(new { message = "Student not found." });
+            }
 
             var courses = await _context.StudentCourses
                 .Where(sc => sc.StudentId == studentId)
@@ -318,6 +397,11 @@ namespace CourseApi.Controllers
             int courseId,
             UpdateStudentCourseStatusVM model)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             var studentCourse = await _context.StudentCourses
                 .FirstOrDefaultAsync(sc =>
                     sc.StudentId == studentId &&
@@ -330,6 +414,22 @@ namespace CourseApi.Controllers
                 return NotFound(new
                 {
                     message = "Student is not enrolled in this course."
+                });
+            }
+
+            if (!Enum.IsDefined(typeof(EnrollmentStatus), model.EnrollmentStatus))
+            {
+                return BadRequest(new
+                {
+                    message = "Invalid enrollment status value."
+                });
+            }
+
+            if (!Enum.IsDefined(typeof(PassStatus), model.PassStatus))
+            {
+                return BadRequest(new
+                {
+                    message = "Invalid pass status value."
                 });
             }
 
@@ -374,7 +474,7 @@ namespace CourseApi.Controllers
 
             if (model.EnrollmentStatus == EnrollmentStatus.Completed)
             {
-                studentCourse.CompletionDate = DateTime.Now;
+                studentCourse.CompletionDate = DateTime.UtcNow;
             }
             else
             {
@@ -387,80 +487,6 @@ namespace CourseApi.Controllers
             {
                 message = "Course status updated successfully."
             });
-        }
-
-
-        // Search student courses with filtering and pagination
-        [HttpGet("search-courses")]
-        public async Task<IActionResult> SearchStudentCourses(
-            [FromQuery] StudentCourseSearchVM model)
-        {
-            var query = _context.StudentCourses
-                .Include(sc => sc.Student)
-                .Include(sc => sc.Course)
-                .AsQueryable();
-
-            if (!string.IsNullOrWhiteSpace(model.StudentName))
-            {
-                query = query.Where(sc =>
-                    sc.Student.Name.Contains(model.StudentName));
-            }
-
-            if (!string.IsNullOrWhiteSpace(model.CourseName))
-            {
-                query = query.Where(sc =>
-                    sc.Course.Title.Contains(model.CourseName));
-            }
-
-            var totalRecords = await query.CountAsync();
-
-            if (model.PageNumber < 1)
-            {
-                model.PageNumber = 1;
-            }
-
-            if (model.PageSize < 1)
-            {
-                model.PageSize = 10;
-            }
-
-            var courses = await query
-                .OrderBy(sc => sc.Student.Name)
-                .Skip((model.PageNumber - 1) * model.PageSize)
-                .Take(model.PageSize)
-                .Select(sc => new StudentCourseSearchDto
-                {
-                    StudentName = sc.Student.Name,
-
-                    CourseTitle = sc.Course.Title,
-
-                    EnrollmentStatus = sc.EnrollmentStatus,
-
-                    PassStatus = sc.PassStatus,
-
-                    EnrollmentDate = sc.EnrollmentDate,
-
-                    CompletionDate = sc.CompletionDate
-                })
-                .ToListAsync();
-
-
-            var result = new PaginatedResultDto<StudentCourseSearchDto>
-            {
-                TotalRecords = totalRecords,
-
-                TotalPages = (int)Math.Ceiling(
-                    totalRecords / (double)model.PageSize),
-
-                PageNumber = model.PageNumber,
-
-                PageSize = model.PageSize,
-
-                Data = courses
-            };
-
-
-            return Ok(result);
         }
 
     }

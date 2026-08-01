@@ -2,6 +2,7 @@
 using CourseApi.DTOs;
 using CourseApi.Models;
 using CourseApi.ViewModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -9,6 +10,7 @@ namespace CourseApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class TeachersController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -71,6 +73,10 @@ namespace CourseApi.Controllers
         [HttpPost]
         public async Task<ActionResult<TeacherDto>> CreateTeacher(CreateTeacherVM model)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
 
             var teacher = new Teacher
             {
@@ -103,9 +109,13 @@ namespace CourseApi.Controllers
 
         [HttpPut("{id}")]
         public async Task<IActionResult> UpdateTeacher(
-    int id,
-    CreateTeacherVM model)
+            int id,
+            CreateTeacherVM model)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
 
             var teacher = await _context.Teachers
                 .FindAsync(id);

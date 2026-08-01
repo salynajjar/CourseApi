@@ -1,6 +1,109 @@
-@CourseApi_HostAddress = http://localhost:5092
+@host = http://localhost:5092
+@token = {{login.response.body.token}}
 
-GET {{CourseApi_HostAddress}}/weatherforecast/
-Accept: application/json
+### Register
+# @name register
+POST {{host}}/api/Auth/register
+Content-Type: application/json
+
+{
+  "username": "saly",
+  "email": "salynajjar923@gmail.com",
+  "password": "SecurePass123!"
+}
+
+###
+
+### Login
+# @name login
+POST {{host}}/api/Auth/login
+Content-Type: application/json
+
+{
+  "email": "salynajjar923@gmail.com",
+  "password": "SecurePass123!"
+}
+
+###
+
+### Get all courses
+GET {{host}}/api/Courses
+Authorization: Bearer {{token}}
+
+###
+
+### Search courses by title
+GET {{host}}/api/Courses/search?title=Math
+Authorization: Bearer {{token}}
+
+###
+
+### Filter courses by price
+GET {{host}}/api/Courses/filter?minPrice=0&maxPrice=500
+Authorization: Bearer {{token}}
+
+###
+
+### Global student-course search (paginated)
+GET {{host}}/api/Students/courses/search?studentName=Ali&courseName=Math&pageNumber=1&pageSize=10
+Authorization: Bearer {{token}}
+
+###
+
+### Create student
+POST {{host}}/api/Students
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Ali Hassan",
+  "email": "ali@example.com"
+}
+
+###
+
+### Enroll student in course
+POST {{host}}/api/Students/1/courses
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "courseId": 1
+}
+
+###
+
+### Update enrollment status
+PUT {{host}}/api/Students/1/courses/1/status
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "enrollmentStatus": "Completed",
+  "passStatus": "Passed"
+}
+
+###
+
+### Add course prerequisite
+POST {{host}}/api/Courses/2/prerequisites
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "prerequisiteCourseId": 1
+}
+
+###
+
+### Create teacher
+POST {{host}}/api/Teachers
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "name": "Dr. Sara",
+  "email": "sara@university.edu"
+}
 
 ###

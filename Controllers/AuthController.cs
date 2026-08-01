@@ -5,8 +5,6 @@ using CourseApi.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using CourseApi.Services;
-
 
 namespace CourseApi.Controllers
 {
@@ -30,6 +28,10 @@ namespace CourseApi.Controllers
         [HttpPost("register")]
         public async Task<IActionResult> Register(RegisterDto dto)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
 
             var existingUser = await _context.AppUsers
                 .FirstOrDefaultAsync(u => u.Email == dto.Email);
@@ -72,6 +74,11 @@ namespace CourseApi.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginDto dto)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             var user = await _context.AppUsers
                 .FirstOrDefaultAsync(u => u.Email == dto.Email);
 
